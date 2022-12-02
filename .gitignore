@@ -1,0 +1,30 @@
+# CMake
+build/**
+**/CMakeCache.txt
+**/CMakeFiles
+**/CMakeScripts
+**/Makefile
+**/cmake_install.cmake
+**/install_manifest.txt
+**/compile_commands.json
+tags
+
+# Python
+**/*.egg-info
+**.pyc
+**/.eggs
+**/venv
+**/__pycache__
+/dist
+.coverage
+**/dralOutput
+**/.tox
+
+# Project
+.cache
+project.ft
+project.duck
+**/.gdb_history
+.settings
+.cproject
+.project
