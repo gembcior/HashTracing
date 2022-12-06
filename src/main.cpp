@@ -41,5 +41,10 @@ int main(int argc, char* argv[])
   showTheArray(hash6);
   static_assert(hash6 == hash6Exp);
 
+  constexpr Md5Hash hash7 = md5("");
+  constexpr Md5Hash hash7Exp = { 0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e };
+  showTheArray(hash7);
+  static_assert(hash7 == hash7Exp);
+
   return 0;
 }
