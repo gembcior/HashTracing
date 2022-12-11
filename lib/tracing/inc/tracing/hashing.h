@@ -1,24 +1,16 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef LIB_TRACING_HASHING_H
+#define LIB_TRACING_HASHING_H
 
 #include <array>
 #include <bitset>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
 
-namespace hashing {
-
-template<typename T, size_t size>
-void showTheArray(std::array<T, size> data)
-{
-  for (auto& item : data) {
-    std::cout << std::setfill('0') << std::setw(2) << std::hex << static_cast<uint32_t>(item);
-  }
-  std::cout << std::endl;
-}
+namespace tracing {
 
 constexpr size_t Md5BlockSize = 512 / 8;
 constexpr size_t Md5MsgLenBlockSize = 64 / 8;
@@ -53,7 +45,7 @@ constexpr uint32_t S[] = {
   6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 };
 
-using Md5Hash = std::array<uint32_t, Md5HashLen>;
+using Md5Hash = std::array<uint8_t, Md5HashLen>;
 
 constexpr size_t getBlocksNumber(const size_t size)
 {
@@ -91,7 +83,7 @@ constexpr std::array<uint8_t, size - 1> removeNullTerminator(const char (&msg)[s
 }
 
 template<size_t size>
-constexpr std::array<uint8_t, getPaddedMsgSize(size)> doMsgPadding(std::array<uint8_t, size>& msg)
+constexpr std::array<uint8_t, getPaddedMsgSize(size)> doMsgPadding(const std::array<uint8_t, size>& msg)
 {
   constexpr auto paddedMsgSize = getPaddedMsgSize(size);
   constexpr auto paddingBeginOffset = size;
@@ -120,7 +112,7 @@ constexpr std::array<uint8_t, getPaddedMsgSize(size)> doMsgPadding(std::array<ui
 }
 
 template<size_t size>
-constexpr std::array<uint32_t, size / sizeof(uint32_t)> convertToWords(std::array<uint8_t, size> data)
+constexpr std::array<uint32_t, size / sizeof(uint32_t)> convertToWords(const std::array<uint8_t, size>& data)
 {
   constexpr size_t wordsNumber = size / sizeof(uint32_t);
   std::array<uint32_t, wordsNumber> words{};
@@ -137,11 +129,10 @@ constexpr uint32_t rotateLeft(uint32_t value, size_t amount)
 }
 
 template<size_t size>
-constexpr Md5Hash md5(const char (&text)[size])
+constexpr Md5Hash md5(const std::array<unsigned char, size>& text)
 {
-  auto msg = removeNullTerminator(text);
-  auto data = doMsgPadding(msg);
-  auto words = convertToWords(data);
+  const auto data = doMsgPadding(text);
+  const auto words = convertToWords(data);
 
   uint32_t a0 = BufferA0;
   uint32_t b0 = BufferB0;
@@ -149,7 +140,7 @@ constexpr Md5Hash md5(const char (&text)[size])
   uint32_t d0 = BufferD0;
   uint32_t f, g;
 
-  for (unsigned int block = 0; block < getBlocksNumber(msg.size()); block++) {
+  for (unsigned int block = 0; block < getBlocksNumber(text.size()); block++) {
     uint32_t a = a0;
     uint32_t b = b0;
     uint32_t c = c0;
@@ -191,6 +182,27 @@ constexpr Md5Hash md5(const char (&text)[size])
   return result;
 }
 
+template<size_t size>
+constexpr Md5Hash md5(const char (&text)[size])
+{
+  const auto msg = removeNullTerminator(text);
+  return md5(msg);
+}
+
+static_assert(md5(std::array<unsigned char, 1>{ 'a' }) ==
+              Md5Hash{ 0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8, 0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77, 0x26, 0x61 });
+static_assert(md5("") == Md5Hash{ 0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e });
+static_assert(md5("a") == Md5Hash{ 0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8, 0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77, 0x26, 0x61 });
+static_assert(md5("abc") == Md5Hash{ 0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f, 0xb0, 0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72 });
+static_assert(md5("message digest") ==
+              Md5Hash{ 0xf9, 0x6b, 0x69, 0x7d, 0x7c, 0xb7, 0x93, 0x8d, 0x52, 0x5a, 0x2f, 0x31, 0xaa, 0xf1, 0x61, 0xd0 });
+static_assert(md5("abcdefghijklmnopqrstuvwxyz") ==
+              Md5Hash{ 0xc3, 0xfc, 0xd3, 0xd7, 0x61, 0x92, 0xe4, 0x00, 0x7d, 0xfb, 0x49, 0x6c, 0xca, 0x67, 0xe1, 0x3b });
+static_assert(md5("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") ==
+              Md5Hash{ 0xd1, 0x74, 0xab, 0x98, 0xd2, 0x77, 0xd9, 0xf5, 0xa5, 0x61, 0x1c, 0x2c, 0x9f, 0x41, 0x9d, 0x9f });
+static_assert(md5("12345678901234567890123456789012345678901234567890123456789012345678901234567890") ==
+              Md5Hash{ 0x57, 0xed, 0xf4, 0xa2, 0x2b, 0xe3, 0xc9, 0x55, 0xac, 0x49, 0xda, 0x2e, 0x21, 0x07, 0xb6, 0x7a });
+
 };
 
-#endif /* HASH_H */
+#endif /* LIB_TRACING_HASHING_H */
