@@ -23,7 +23,7 @@ public:
   }
 
   void registerOutput(OutputFunction out);
-  void printEndLine(bool endLine);
+  void printEndLine();
 
   template<typename... Args>
   void print(const char* text, Args... arguments);
@@ -54,7 +54,6 @@ protected:
 protected:
   void printColorMark(char mark, char type = ColorType::Foreground);
   void printAttributeMark(char mark);
-  void printEndLine();
   void putChar(const char& character)
   {
     if (m_out) {

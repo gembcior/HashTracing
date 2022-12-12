@@ -1,3 +1,3 @@
-# Chess Player
+# Hash Tracing
 
 ## Introduction

@@ -21,6 +21,8 @@ endif()
 
 project(hashTracing CXX)
 
+enable_testing()
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/artifacts CACHE PATH "Install path prefix." FORCE)
 endif()
