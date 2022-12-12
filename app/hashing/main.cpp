@@ -1,6 +1,6 @@
+#include "tracing/hash_trace.h"
 #include "tracing/printer.h"
 #include "tracing/trace.h"
-#include "tracing/hash_trace.h"
 
 #include <iostream>
 
