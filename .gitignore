@@ -28,3 +28,5 @@ project.duck
 .settings
 .cproject
 .project
+
+**/trace.csv
